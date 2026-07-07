@@ -117,18 +117,36 @@ Your app should listen on `127.0.0.1:3000` — nginx on each VM proxies `/` ther
 
 ---
 
-## Step 5 — Manage App Secrets (DB password, Redis key)
+## Step 5 — Fetch App Secrets From Key Vault
 
-There's no Key Vault in this stack. Fetch these values from Terraform outputs and inject them into your app however you prefer (VM environment file, your own secrets manager, CI/CD pipeline, etc.):
+DB credentials, the DB connection string, Redis hostname/key, and the VM
+admin username/SSH public key are all stored as secrets in the deployment's
+Key Vault (`modules/keyvault`) — nothing sensitive needs to live in your CI/CD
+pipeline or a `.env` file checked into git.
 
 ```bash
-DB_FQDN=$(terraform output -raw db_fqdn)
-REDIS_HOSTNAME=$(terraform output -raw redis_hostname)
+KV_NAME=$(terraform output -raw key_vault_name 2>/dev/null || az keyvault list --resource-group <customer>-<env>-rg --query "[0].name" -o tsv)
 
-# db_admin_password is whatever you set in terraform.tfvars
-# Build your connection string, e.g.:
-# postgresql://<db_admin_username>:<db_admin_password>@${DB_FQDN}/appdb?sslmode=require
+# Grant yourself access first if you weren't the one who ran terraform apply:
+# az role assignment create --role "Key Vault Secrets User" \
+#   --assignee <your-object-id> --scope $(az keyvault show --name $KV_NAME --query id -o tsv)
+
+az keyvault secret show --vault-name $KV_NAME --name db-connection-string --query value -o tsv
+az keyvault secret show --vault-name $KV_NAME --name redis-primary-access-key --query value -o tsv
+az keyvault secret show --vault-name $KV_NAME --name redis-hostname --query value -o tsv
 ```
+
+The Key Vault sits behind a private endpoint (no public network access) — run
+the commands above from a machine inside the VNet (a VM, VPN client, or
+Azure Bastion session), or temporarily use Azure Cloud Shell with a VNet
+integration if you need access from outside.
+
+Secrets stored: `db-admin-username`, `db-admin-password`, `db-connection-string`,
+`redis-hostname`, `redis-primary-access-key`, `vm-admin-username`, `vm-ssh-public-key`.
+
+Note: only the SSH **public** key is stored — Terraform never has access to
+your private key, so it can't be escrowed here. Keep your private key backed
+up separately (e.g. in your own password manager).
 
 ---
 

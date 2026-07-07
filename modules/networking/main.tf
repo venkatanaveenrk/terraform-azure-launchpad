@@ -55,6 +55,14 @@ resource "azurerm_subnet" "redis" {
   address_prefixes     = ["10.0.4.0/24"]
 }
 
+# Key Vault private endpoint subnet
+resource "azurerm_subnet" "keyvault" {
+  name                 = "${var.name_prefix}-snet-kv"
+  resource_group_name  = var.resource_group_name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.6.0/28"]
+}
+
 # ── NSG: Application Gateway ──────────────────────────────────────────────────
 resource "azurerm_network_security_group" "agw" {
   name                = "${var.name_prefix}-nsg-agw"
@@ -234,6 +242,22 @@ resource "azurerm_private_dns_zone_virtual_network_link" "redis" {
   name                  = "${var.name_prefix}-vnetlink-redis"
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.redis.name
+  virtual_network_id    = azurerm_virtual_network.main.id
+  registration_enabled  = false
+  tags                  = var.tags
+}
+
+# ── Private DNS Zone for Key Vault private endpoint ──────────────────────────
+resource "azurerm_private_dns_zone" "keyvault" {
+  name                = "privatelink.vaultcore.azure.net"
+  resource_group_name = var.resource_group_name
+  tags                = var.tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "keyvault" {
+  name                  = "${var.name_prefix}-vnetlink-kv"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.keyvault.name
   virtual_network_id    = azurerm_virtual_network.main.id
   registration_enabled  = false
   tags                  = var.tags

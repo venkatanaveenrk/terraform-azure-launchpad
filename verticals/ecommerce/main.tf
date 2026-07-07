@@ -89,3 +89,38 @@ module "compute" {
   agw_subnet_id       = module.networking.agw_subnet_id
   agw_capacity        = local.sz.agw_capacity
 }
+
+# ── Key Vault (DB/Redis/VM secrets) ──────────────────────────────────────────
+module "keyvault" {
+  source = "../../modules/keyvault"
+
+  name_prefix              = local.name_prefix
+  resource_group_name      = azurerm_resource_group.main.name
+  location                 = var.location
+  tags                     = local.common_tags
+  keyvault_subnet_id       = module.networking.keyvault_subnet_id
+  keyvault_dns_zone_id     = module.networking.keyvault_private_dns_zone_id
+  db_admin_username        = var.db_admin_username
+  db_admin_password        = var.db_admin_password
+  db_fqdn                  = module.database.db_fqdn
+  redis_hostname           = module.database.redis_hostname
+  redis_primary_access_key = module.database.redis_primary_access_key
+  vm_admin_username        = var.vm_admin_username
+  vm_ssh_public_key        = var.vm_ssh_public_key
+}
+
+# ── Recovery (Backup + Site Recovery DR) ─────────────────────────────────────
+module "recovery" {
+  source = "../../modules/recovery"
+
+  name_prefix           = local.name_prefix
+  resource_group_name   = azurerm_resource_group.main.name
+  location              = var.location
+  tags                  = local.common_tags
+  vm_count              = local.sz.vm_count
+  vm_ids                = module.compute.vm_ids
+  vm_nic_ids            = module.compute.vm_nic_ids
+  vm_vnet_id            = module.networking.vnet_id
+  enable_dr_replication = var.enable_dr_replication
+  dr_location           = var.dr_location
+}

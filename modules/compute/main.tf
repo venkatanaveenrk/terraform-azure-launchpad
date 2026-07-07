@@ -12,16 +12,17 @@ resource "azurerm_public_ip" "agw" {
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
   sku                 = "Standard"
-  zones               = ["1", "2", "3"]
   tags                = var.tags
 }
 
 # ── Application Gateway WAF v2 ────────────────────────────────────────────────
+# Not zone-redundant (avoids the zonal cost premium) — HA is achieved instead
+# via a minimum of 2 autoscale instances, which keeps the gateway available
+# through a single instance failure.
 resource "azurerm_application_gateway" "main" {
   name                = "${var.name_prefix}-agw"
   location            = var.location
   resource_group_name = var.resource_group_name
-  zones               = ["1", "2", "3"]
   tags                = var.tags
 
   sku {

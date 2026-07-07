@@ -25,6 +25,26 @@ output "redis_hostname" {
   sensitive   = true
 }
 
+output "key_vault_name" {
+  description = "Key Vault name holding DB/Redis/VM secrets — az keyvault secret show --vault-name <name> --name <secret>"
+  value       = module.keyvault.key_vault_name
+}
+
+output "key_vault_uri" {
+  description = "Key Vault URI holding DB/Redis/VM secrets."
+  value       = module.keyvault.key_vault_uri
+}
+
+output "recovery_vault_name" {
+  description = "Recovery Services Vault name — holds VM backups and (if enabled) Site Recovery replication."
+  value       = module.recovery.recovery_vault_name
+}
+
+output "dr_resource_group_name" {
+  description = "Secondary-region resource group VMs fail over into. Null if enable_dr_replication is false."
+  value       = module.recovery.dr_resource_group_name
+}
+
 output "next_steps" {
   description = "Post-deploy checklist."
   value       = <<-EOT
@@ -39,6 +59,14 @@ output "next_steps" {
     SSH to VMs using the private key matching your vm_ssh_public_key:
       ssh ${var.vm_admin_username}@<vm_private_ip>
     (Connect via VPN or jump host — VMs have no public IP)
+
+    ─── Secrets ──────────────────────────────────────────────────────
+    DB/Redis/VM secrets are in Key Vault: ${module.keyvault.key_vault_name}
+      az keyvault secret show --vault-name ${module.keyvault.key_vault_name} --name db-connection-string
+
+    ─── Backup & DR ──────────────────────────────────────────────────
+    VM backups + (if enabled) Site Recovery replication: ${module.recovery.recovery_vault_name}
+    See docs/disaster-recovery.md for restore/failover steps.
 
     ─── Full guide ───────────────────────────────────────────────────
     docs/post-deploy.md

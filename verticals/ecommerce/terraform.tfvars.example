@@ -32,3 +32,9 @@ vm_ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAA..."   # paste your public key h
 db_admin_username = "psqladmin"
 db_admin_password = "YourStr0ng!Pass"    # min 8 chars, must include:
                                          # uppercase, lowercase, number, special char
+
+# ── Disaster recovery (optional — sensible defaults shown) ───────────────────
+# enable_dr_replication = true         # Site Recovery cross-region VM replication
+                                        # + backups. Set false for backups-only.
+# dr_location            = "westus"    # secondary region VMs fail over into
+                                        # (must differ from `location` above)

@@ -9,6 +9,34 @@
 
 ---
 
+## What This Repo Does
+
+This is a Terraform template that stands up a complete, secured, production-grade
+application stack on Azure — load balancer/WAF, VMs, database, cache, secrets
+management, backups, and cross-region disaster recovery — from a single
+`terraform.tfvars` file. It replaces weeks of hand-rolling networking, security,
+and Day-2 operational plumbing with a `terraform apply`.
+
+Everything is named and tagged from two values (`customer` + `environment`), so
+the same code deploys isolated, identically-shaped infrastructure for as many
+brands/clients/environments as you need, without copy-pasting `.tf` files.
+
+## Who It's For
+
+- **DevOps / Platform engineers** who need a secure-by-default Azure landing
+  zone (private subnets, NSGs, WAF, no public VM access) without designing one
+  from scratch for every new project.
+- **Agencies and consultancies** standing up the same class of stack repeatedly
+  for different clients — the `customer`/`environment` naming convention exists
+  specifically for this multi-tenant reuse case.
+- **Small teams that need production posture on day one** — backups, DR
+  replication, and centralized secrets are built in rather than bolted on
+  after an incident.
+- **Not a fit for**: teams needing a bespoke/non-standard architecture, or
+  deployments outside Azure.
+
+---
+
 ## How Resource Names Work
 
 Set `customer = "adidas"` and `environment = "prod"` and every resource is named for you:
@@ -39,6 +67,47 @@ Change `customer = "nike"` and everything renames consistently.
 
 ## Architecture — E-commerce
 
+```mermaid
+flowchart TB
+    User(["🌐 End User"])
+    CDN["Your DNS / CDN provider<br/>terminates SSL (Cloudflare, Front Door, etc.)"]
+
+    subgraph PRIMARY["Azure — Primary Region (e.g. eastus)"]
+        AGW["Application Gateway WAF v2<br/>OWASP 3.2 · Prevention mode<br/>min. 2 autoscale instances"]
+
+        subgraph APP["App subnet — private, no public IP"]
+            VM1["VM 1"]
+            VM2["VM 2..N"]
+        end
+
+        PG[("PostgreSQL 16<br/>Flexible Server<br/>Zone HA")]
+        REDIS[("Redis Cache<br/>TLS 1.2+")]
+        KV["Key Vault<br/>DB / Redis / VM secrets"]
+        RSV["Recovery Services Vault<br/>daily VM backup"]
+    end
+
+    subgraph DR["Azure — DR Region, optional<br/>(enable_dr_replication)"]
+        DRVM["Replicated VMs<br/>via Site Recovery"]
+    end
+
+    User -->|HTTPS| CDN
+    CDN -->|HTTP| AGW
+    AGW --> VM1
+    AGW --> VM2
+    VM1 --> PG
+    VM1 --> REDIS
+    VM1 -. reads secrets .-> KV
+    VM2 --> PG
+    VM2 --> REDIS
+    VM2 -. reads secrets .-> KV
+    VM1 -. backed up .-> RSV
+    VM2 -. backed up .-> RSV
+    RSV ==>|replicate| DRVM
+```
+
+<details>
+<summary>Plain-text version (if Mermaid doesn't render for you)</summary>
+
 ```
 Internet
     │  Your DNS/CDN provider (Cloudflare, Front Door, etc.)
@@ -46,15 +115,20 @@ Internet
     ▼
 Application Gateway WAF v2  (HTTP, port 80)
     │  OWASP 3.2 Prevention mode
-    │  Zones: 1, 2, 3 (zone redundant)
+    │  Min. 2 autoscale instances (no zone redundancy — see cost note below)
     ▼
 Linux VMs (Ubuntu 24.04 LTS)
     │  Private subnet only · No public IP
+    │  Backed up daily · Replicated to a DR region via Site Recovery (optional)
     ├──▶  PostgreSQL 16 Flexible Server
     │       Private · Zone HA · SSL enforced
-    └──▶  Redis Cache
-            Private endpoint · TLS 1.2+
+    ├──▶  Redis Cache
+    │       Private endpoint · TLS 1.2+
+    └──▶  Key Vault
+            Private endpoint · DB/Redis/VM secrets
 ```
+
+</details>
 
 ---
 
@@ -118,27 +192,31 @@ Open `terraform.tfvars` and fill these values:
 
 | Size | Est. Monthly | VM SKU | DB SKU | Redis | Best For |
 |---|---|---|---|---|---|
-| `small` | ~$250/mo | Standard_B2s_v2 × 1 | B_Standard_B2s | Basic C0 | Startup, <10k users |
-| `medium` | ~$980/mo | Standard_D4s_v5 × 2 | GP_Standard_D4s_v5 | Standard C1 | Growing, <100k users |
-| `large` | ~$2,150/mo | Standard_E8s_v5 × 3 | GP_Standard_D8s_v5 | Standard C2 | Enterprise, <1M users |
+| `small` | ~$440/mo | Standard_B2s_v2 × 1 | B_Standard_B2s | Basic C0 | Startup, <10k users |
+| `medium` | ~$1,020/mo | Standard_D4s_v5 × 2 | GP_Standard_D4s_v5 | Standard C1 | Growing, <100k users |
+| `large` | ~$2,310/mo | Standard_E8s_v5 × 3 | GP_Standard_D8s_v5 | Standard C2 | Enterprise, <1M users |
 
-See [docs/cost-estimates.md](docs/cost-estimates.md) for detailed breakdown.
+Includes Key Vault, VM backups, and Site Recovery cross-region replication.
+Set `enable_dr_replication = false` to drop the replication cost (~$40–115/mo
+depending on size) — see [docs/cost-estimates.md](docs/cost-estimates.md) for
+the full breakdown.
 
 ---
 
 ## What Gets Deployed
 
 ### Networking
-- Virtual network `10.0.0.0/16` with 4 isolated subnets
+- Virtual network `10.0.0.0/16` with 5 isolated subnets
 - AGW subnet `10.0.1.0/24` — Application Gateway only
 - App subnet `10.0.2.0/24` — VMs only
 - DB subnet `10.0.3.0/24` — PostgreSQL only (delegated)
 - Redis subnet `10.0.4.0/24` — Redis only
+- Key Vault subnet `10.0.6.0/28` — Key Vault private endpoint only
 - NSGs: deny-all by default, explicit allow rules only
-- Private DNS zone for PostgreSQL
+- Private DNS zones for PostgreSQL, Redis, and Key Vault
 
 ### Compute
-- Application Gateway WAF v2 (OWASP 3.2, Prevention mode, zone redundant)
+- Application Gateway WAF v2 (OWASP 3.2, Prevention mode, min. 2 autoscale instances — not zone-redundant, see [cost note](docs/cost-estimates.md))
 - Linux VMs Ubuntu 24.04 LTS (zone spread, auto-patching, no public IP)
 - Serves plain HTTP — terminate SSL at your DNS/CDN provider in front of it
 - Health probe on `/health`
@@ -146,6 +224,15 @@ See [docs/cost-estimates.md](docs/cost-estimates.md) for detailed breakdown.
 ### Database
 - PostgreSQL 16 Flexible Server (zone-redundant HA, private only, SSL enforced)
 - Redis Cache with private endpoint (TLS 1.2+, no public access)
+
+### Secrets
+- Key Vault (RBAC-authorized, private endpoint only, no public network access)
+- Stores: DB admin username/password, DB connection string, Redis hostname/key, VM admin username, VM SSH public key
+
+### Backup & Disaster Recovery
+- Recovery Services Vault with a daily VM backup policy (30 daily / 12 weekly / 12 monthly retention) — always on
+- Azure Site Recovery cross-region VM replication to a secondary region — on by default, toggle off with `enable_dr_replication = false`
+- See [docs/disaster-recovery.md](docs/disaster-recovery.md) for restore and failover steps
 
 ---
 
@@ -203,7 +290,9 @@ azure-infra-quickstart/
 ├── modules/
 │   ├── networking/          VNet, subnets, NSGs, private DNS
 │   ├── compute/             VMs, Application Gateway WAF v2
-│   └── database/            PostgreSQL 16, Redis Cache
+│   ├── database/            PostgreSQL 16, Redis Cache
+│   ├── keyvault/            Key Vault + DB/Redis/VM secrets
+│   └── recovery/            Recovery Services Vault, VM backup, Site Recovery DR
 ├── verticals/
 │   └── ecommerce/
 │       ├── main.tf
@@ -212,7 +301,8 @@ azure-infra-quickstart/
 │       └── terraform.tfvars.example   ← copy this, fill 9 values
 └── docs/
     ├── cost-estimates.md
-    └── post-deploy.md
+    ├── post-deploy.md
+    └── disaster-recovery.md
 ```
 
 ---
@@ -225,7 +315,8 @@ az lock delete \
   --name adidas-prod-lock \
   --resource-group adidas-prod-rg
 
-# Step 2: Destroy all resources
+# Step 2: Destroy all resources (also tears down the DR region resource
+# group/replication if enable_dr_replication was true — it carries no lock)
 terraform destroy
 ```
 

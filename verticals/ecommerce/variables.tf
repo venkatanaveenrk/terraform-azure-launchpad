@@ -71,6 +71,18 @@ variable "db_admin_password" {
   }
 }
 
+variable "enable_dr_replication" {
+  type        = bool
+  description = "Enable Azure Site Recovery cross-region VM replication for disaster recovery, on top of the always-on backups. Adds a second region's VNet, a staging storage account, and ongoing per-VM replication cost — disable for lower-cost/non-prod deployments."
+  default     = true
+}
+
+variable "dr_location" {
+  type        = string
+  description = "Secondary Azure region VMs replicate to for disaster recovery (only used when enable_dr_replication is true). Must differ from location — see docs/disaster-recovery.md for supported region pairs."
+  default     = "westus"
+}
+
 # =============================================================================
 #  Size presets — do not edit unless you know what you're doing
 # =============================================================================
@@ -84,7 +96,7 @@ locals {
       redis_capacity = 0
       redis_family   = "C"
       redis_sku      = "Basic"
-      agw_capacity   = 1
+      agw_capacity   = 2
     }
     medium = {
       vm_sku         = "Standard_D4s_v5"
