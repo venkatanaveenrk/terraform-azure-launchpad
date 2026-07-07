@@ -1,0 +1,11 @@
+variable "name_prefix"         { type = string }
+variable "resource_group_name" { type = string }
+variable "location"            { type = string }
+variable "tags"                { type = map(string) }
+variable "vm_sku"              { type = string }
+variable "vm_count"            { type = number }
+variable "vm_admin_username"   { type = string }
+variable "vm_ssh_public_key"   { type = string }
+variable "vm_subnet_id"        { type = string }
+variable "agw_subnet_id"       { type = string }
+variable "agw_capacity"        { type = number }

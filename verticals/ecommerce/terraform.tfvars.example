@@ -1,0 +1,34 @@
+# =============================================================================
+#  azure-infra-quickstart — ecommerce vertical
+#  Step 1: Copy this file
+#    cp terraform.tfvars.example terraform.tfvars
+#  Step 2: Fill in your values below
+#  Step 3: terraform init && terraform apply
+# =============================================================================
+
+# ── Identity ─────────────────────────────────────────────────────────────────
+customer    = "adidas"            # your brand/company name (lowercase, no spaces)
+                                  # → creates: adidas-prod-rg, adidas-prod-vm, adidas-prod-vnet ...
+
+environment = "prod"              # prod | staging | dev
+
+# ── Region ───────────────────────────────────────────────────────────────────
+location    = "eastus"            # eastus | westeurope | southeastasia | etc.
+
+# ── Domain ───────────────────────────────────────────────────────────────────
+domain_name = "adidas.com"        # your domain — point your DNS/CDN provider's origin at the AGW public IP
+                                  # and terminate SSL there (AGW serves plain HTTP)
+
+# ── Size ─────────────────────────────────────────────────────────────────────
+size        = "small"             # small (~$250/mo) | medium (~$980/mo) | large (~$2150/mo)
+                                  # see docs/cost-estimates.md for details
+
+# ── VM credentials ────────────────────────────────────────────────────────────
+vm_admin_username = "azureuser"
+vm_ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAA..."   # paste your public key here
+                                                         # run: cat ~/.ssh/id_rsa.pub
+
+# ── Database credentials ──────────────────────────────────────────────────────
+db_admin_username = "psqladmin"
+db_admin_password = "YourStr0ng!Pass"    # min 8 chars, must include:
+                                         # uppercase, lowercase, number, special char
