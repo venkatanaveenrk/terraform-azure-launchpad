@@ -6,16 +6,16 @@
 
 variable "customer" {
   type        = string
-  description = "Customer / brand name. All resources will be named <customer>-<resource>. e.g. 'adidas' → adidas-rg, adidas-vm, adidas-vnet"
+  description = "Customer / brand name. All resources will be named <customer>-<resource>. e.g. 'contoso' → contoso-rg, contoso-vm, contoso-vnet"
   validation {
     condition     = can(regex("^[a-z0-9-]{2,20}$", var.customer))
-    error_message = "customer must be 2-20 lowercase letters, numbers, or hyphens. e.g. 'adidas', 'my-shop'"
+    error_message = "customer must be 2-20 lowercase letters, numbers, or hyphens. e.g. 'contoso', 'my-shop'"
   }
 }
 
 variable "environment" {
   type        = string
-  description = "Deployment environment. Appended to resource names: adidas-prod-vm, adidas-dev-vm"
+  description = "Deployment environment. Appended to resource names: contoso-prod-vm, contoso-dev-vm"
   default     = "prod"
   validation {
     condition     = contains(["prod", "staging", "dev"], var.environment)
@@ -31,7 +31,7 @@ variable "location" {
 
 variable "domain_name" {
   type        = string
-  description = "Your domain e.g. adidas.com — point your DNS/CDN provider's origin at the AGW public IP and terminate SSL there."
+  description = "Your domain e.g. contoso.com — point your DNS/CDN provider's origin at the AGW public IP and terminate SSL there."
 }
 
 variable "size" {
