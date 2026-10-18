@@ -2,7 +2,7 @@
 #  Module: recovery
 #  Creates: Recovery Services Vault, VM backup policy + protection, and
 #           Azure Site Recovery (ASR) cross-region replication for DR failover
-#  Resource naming: adidas-prod-rsv, adidas-prod-dr-rg (secondary region)
+#  Resource naming: contoso-prod-rsv, contoso-prod-dr-rg (secondary region)
 #
 #  Note: ASR resources are order-sensitive in the azurerm provider. If the
 #  first `terraform apply` errors on the fabric/container/mapping resources,
