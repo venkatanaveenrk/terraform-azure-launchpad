@@ -1,7 +1,7 @@
 # =============================================================================
 #  Module: database
 #  Creates: PostgreSQL 16 Flexible Server, Redis Cache, private endpoint
-#  Resource naming: adidas-prod-psql, adidas-prod-redis
+#  Resource naming: contoso-prod-psql, contoso-prod-redis
 # =============================================================================
 
 # ── PostgreSQL 16 Flexible Server ────────────────────────────────────────────
