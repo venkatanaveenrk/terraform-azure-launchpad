@@ -16,7 +16,7 @@ application stack on Azure — load balancer/WAF, VMs, database, cache, secrets
 management, backups, and cross-region disaster recovery — from a single
 `terraform.tfvars` file. It replaces weeks of hand-rolling networking, security,
 and Day-2 operational plumbing with a `terraform apply`.
-
+h
 Everything is named and tagged from two values (`customer` + `environment`), so
 the same code deploys isolated, identically-shaped infrastructure for as many
 brands/clients/environments as you need, without copy-pasting `.tf` files.
@@ -39,18 +39,18 @@ brands/clients/environments as you need, without copy-pasting `.tf` files.
 
 ## How Resource Names Work
 
-Set `customer = "adidas"` and `environment = "prod"` and every resource is named for you:
+Set `customer = "contoso"` and `environment = "prod"` and every resource is named for you:
 
 ```
-adidas-prod-rg         ← resource group
-adidas-prod-vnet       ← virtual network
-adidas-prod-vm1        ← application VM
-adidas-prod-agw        ← application gateway
-adidas-prod-psql       ← postgresql server
-adidas-prod-redis      ← redis cache
+contoso-prod-rg         ← resource group
+contoso-prod-vnet       ← virtual network
+contoso-prod-vm1        ← application VM
+contoso-prod-agw        ← application gateway
+contoso-prod-psql       ← postgresql server
+contoso-prod-redis      ← redis cache
 ```
 
-Change `customer = "nike"` and everything renames consistently.
+Change `customer = "fabrikam"` and everything renames consistently.
 
 ---
 
@@ -176,10 +176,10 @@ Open `terraform.tfvars` and fill these values:
 
 | Variable | Description | Example |
 |---|---|---|
-| `customer` | Brand/company name — drives all resource names | `adidas` |
+| `customer` | Brand/company name — drives all resource names | `contoso` |
 | `environment` | Deployment environment | `prod` |
 | `location` | Azure region | `eastus` |
-| `domain_name` | Your domain — point its DNS/CDN origin at the AGW IP and terminate SSL there | `adidas.com` |
+| `domain_name` | Your domain — point its DNS/CDN origin at the AGW IP and terminate SSL there | `contoso.com` |
 | `size` | Infrastructure size tier | `small` |
 | `vm_admin_username` | Linux VM login username | `azureuser` |
 | `vm_ssh_public_key` | Your SSH public key | `ssh-rsa AAAA...` |
@@ -269,7 +269,7 @@ security_rule {
 ## Traffic Flow
 
 ```
-User → adidas.com (HTTPS)
+User → contoso.com (HTTPS)
      → Your DNS/CDN provider terminates SSL and forwards HTTP to the origin
      → App Gateway public IP (HTTP)
      → WAF v2 inspects (blocks OWASP Top 10 attacks)
@@ -312,8 +312,8 @@ azure-infra-quickstart/
 ```bash
 # Step 1: Remove the CanNotDelete lock
 az lock delete \
-  --name adidas-prod-lock \
-  --resource-group adidas-prod-rg
+  --name contoso-prod-lock \
+  --resource-group contoso-prod-rg
 
 # Step 2: Destroy all resources (also tears down the DR region resource
 # group/replication if enable_dr_replication was true — it carries no lock)
