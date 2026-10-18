@@ -7,8 +7,8 @@
 # =============================================================================
 
 # ── Identity ─────────────────────────────────────────────────────────────────
-customer    = "adidas"            # your brand/company name (lowercase, no spaces)
-                                  # → creates: adidas-prod-rg, adidas-prod-vm, adidas-prod-vnet ...
+customer    = "contoso"            # your brand/company name (lowercase, no spaces)
+                                  # → creates: contoso-prod-rg, contoso-prod-vm, contoso-prod-vnet ...
 
 environment = "prod"              # prod | staging | dev
 
@@ -16,7 +16,7 @@ environment = "prod"              # prod | staging | dev
 location    = "eastus"            # eastus | westeurope | southeastasia | etc.
 
 # ── Domain ───────────────────────────────────────────────────────────────────
-domain_name = "adidas.com"        # your domain — point your DNS/CDN provider's origin at the AGW public IP
+domain_name = "contoso.com"        # your domain — point your DNS/CDN provider's origin at the AGW public IP
                                   # and terminate SSL there (AGW serves plain HTTP)
 
 # ── Size ─────────────────────────────────────────────────────────────────────
