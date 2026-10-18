@@ -1,7 +1,7 @@
 # =============================================================================
 #  Module: keyvault
 #  Creates: Key Vault (RBAC, private endpoint only) holding DB/Redis/VM secrets
-#  Resource naming: adidasprodkv
+#  Resource naming: contosoprodkv
 # =============================================================================
 
 data "azurerm_client_config" "current" {}
