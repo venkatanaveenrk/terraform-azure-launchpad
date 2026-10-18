@@ -1,7 +1,7 @@
 # =============================================================================
 #  Module: compute
 #  Creates: Linux VMs (Ubuntu 24.04), Application Gateway WAF v2, Public IP
-#  Resource naming: adidas-prod-vm1, adidas-prod-agw, adidas-prod-pip-agw
+#  Resource naming: contoso-prod-vm1, contoso-prod-agw, contoso-prod-pip-agw
 #  Note: No public IP on VMs. Access via VPN/jump host — user's choice.
 # =============================================================================
 
