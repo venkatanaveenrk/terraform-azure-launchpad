@@ -1,7 +1,7 @@
 # =============================================================================
 #  Module: networking
 #  Creates: VNet, subnets (agw/app/db/redis), NSGs, Private DNS for PostgreSQL
-#  Resource naming: <customer>-<env>-<resource>  e.g. adidas-prod-vnet
+#  Resource naming: <customer>-<env>-<resource>  e.g. contoso-prod-vnet
 # =============================================================================
 
 # ── Virtual Network ───────────────────────────────────────────────────────────
